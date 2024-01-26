@@ -1,0 +1,27 @@
+{
+  "name": "vicks",
+  "version": "0.0.2",
+  "author": "Gaurav Thakur <gthakur581@gmail.com>",
+  "main": "dist/vicks.js",
+  "module": "dist/vicks.mjs",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "esbuild": "^0.19.12",
+    "prettier": "^3.2.4",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.9.6",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-esbuild": "^6.1.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf ./dist && rollup -c --bundleConfigAsCjs"
+  },
+  "type": "module",
+  "typings": "dist/vicks.d.ts"
+}
