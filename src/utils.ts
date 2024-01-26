@@ -14,10 +14,6 @@ export function withSearchParams(
 	return `${url}?${searchParams.toString()}`;
 }
 
-export function makeRequest(url: string, options?: RequestInit) {
-	return fetch(url, options);
-}
-
 export function makeFetchConfig(config?: RequestConfig): RequestInit {
 	const fetchConfig: RequestInit = {};
 	fetchConfig.method = config?.method ?? 'GET';

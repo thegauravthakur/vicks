@@ -1,4 +1,4 @@
-import { createSafeUrl, makeFetchConfig, makeRequest, withSearchParams } from './utils.ts';
+import { createSafeUrl, makeFetchConfig, withSearchParams } from './utils.ts';
 import type {
 	DeleteRequestOptions,
 	GetRequestOptions,
@@ -8,6 +8,10 @@ import type {
 } from './types.ts';
 import { HTTP_METHODS } from './constant.ts';
 
+/**
+ * Create a new instance of Vicks
+ * @param options - Default options for all requests
+ */
 export function create(options: RequestConfig = {}) {
 	const requestInterceptors: Array<(config: RequestConfig) => RequestConfig> = [];
 	const responseInterceptors: Array<(response: Response) => Response> = [];
@@ -28,12 +32,23 @@ export function create(options: RequestConfig = {}) {
 	}
 
 	return {
+		/**
+		 * Make a GET request
+		 * @param endpoint - Endpoint to make the request to (can be a full URL)
+		 * @param requestConfig - Request configuration
+		 */
 		get: async <T extends any>(endpoint: string, requestConfig?: GetRequestOptions) => {
 			const initialOptions = { ...options, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.GET };
 			const response = await makeRequest(completeOptions);
 			return executeResponseInterceptors(response) as TypedResponse<T>;
 		},
+		/**
+		 * Make a POST request
+		 * @param endpoint - Endpoint to make the request to (can be a full URL)
+		 * @param body - Body of the request
+		 * @param requestConfig - Request configuration
+		 */
 		post: async <T extends any>(
 			endpoint: string,
 			body: Record<string, any>,
@@ -44,6 +59,12 @@ export function create(options: RequestConfig = {}) {
 			const response = await makeRequest(completeOptions);
 			return executeResponseInterceptors(response) as TypedResponse<T>;
 		},
+		/**
+		 * Make a PUT request
+		 * @param endpoint - Endpoint to make the request to (can be a full URL)
+		 * @param body - Body of the request
+		 * @param requestConfig - Request configuration
+		 */
 		put: async <T extends any>(
 			endpoint: string,
 			body: Record<string, any>,
@@ -54,6 +75,12 @@ export function create(options: RequestConfig = {}) {
 			const response = await makeRequest(completeOptions);
 			return executeResponseInterceptors(response) as TypedResponse<T>;
 		},
+		/**
+		 * Make a PATCH request
+		 * @param endpoint - Endpoint to make the request to (can be a full URL)
+		 * @param body - Body of the request
+		 * @param requestConfig - Request configuration
+		 */
 		patch: async <T extends any>(
 			endpoint: string,
 			body: Record<string, any>,
@@ -64,6 +91,11 @@ export function create(options: RequestConfig = {}) {
 			const response = await makeRequest(completeOptions);
 			return executeResponseInterceptors(response) as TypedResponse<T>;
 		},
+		/**
+		 * Make a DELETE request
+		 * @param endpoint - Endpoint to make the request to (can be a full URL)
+		 * @param requestConfig - Request configuration
+		 */
 		delete: async <T extends any>(endpoint: string, requestConfig?: DeleteRequestOptions) => {
 			const initialOptions = { ...options, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.DELETE };

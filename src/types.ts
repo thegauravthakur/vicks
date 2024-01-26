@@ -1,6 +1,6 @@
 import { HTTP_METHODS } from './constant.ts';
 
-export interface RequestConfig extends RequestInit {
+export interface RequestConfig extends Omit<RequestInit, 'body'> {
 	baseUrl?: string;
 	headers?: Record<string, string>;
 	params?: Record<string, any> | URLSearchParams | string;
