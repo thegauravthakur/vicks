@@ -1,6 +1,6 @@
 {
   "name": "vicks",
-  "version": "0.0.6",
+  "version": "0.0.5",
   "author": "Gaurav Thakur <gthakur581@gmail.com>",
   "main": "dist/vicks.js",
   "module": "dist/vicks.mjs",

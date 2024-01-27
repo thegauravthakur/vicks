@@ -27,16 +27,6 @@ It is written in TypeScript and is fully typed. The overall size of the library 
 - **No Dependencies**: Vicks has no dependencies. It is written in pure JavaScript and does not depend on any
   third-party libraries.
 
-## Why Another HTTP Client?
-As we know, the `fetch` API is the new standard for making HTTP requests in the browser. It is a modern replacement for
-the `XMLHttpRequest` API. Fetch API is also widely supported by all the major browsers. It is also available in Node.js
-above version 18. 
-
-It is a low-level API that is easy to use and provides a lot of flexibility. However, it is not perfect. 
-It has a few shortcomings that make it difficult to use in real-world applications. Vicks is designed to
-fix these shortcomings and provide a better developer experience. All these features are already available in other
-libraries like Axios, but they are not available in the `fetch` API.
-
 ## Installation
 
 ```bash
@@ -55,7 +45,7 @@ all the requests made using this client. You can find a list of all the availabl
 as many clients as you want. Each client will have its own interceptor system and default configurations.
 
 ```ts
-import { createClient } from "vicks";
+import {createClient} from "vicks";
 
 // Create a client with default configurations
 const client = createClient({
@@ -76,7 +66,7 @@ async function fetchPosts() {
 Vicks provides a default client that you can use to make requests.
 
 ```ts
-import { vicks } from "vicks";
+import {vicks} from "vicks";
 
 // Make a GET request
 async function fetchPosts() {
@@ -90,7 +80,7 @@ You can also override the default configurations for the default client. You can
 available options [here](#Default-Configurations-and-Options).
 
 ```ts
-import { vicks } from "vicks";
+import {vicks} from "vicks";
 
 // Override the default configurations
 vicks.defaults.baseURL = "https://jsonplaceholder.typicode.com";
@@ -113,7 +103,7 @@ your code. You can add as many interceptors as you want. You can also remove an 
 #### Creating an Interceptor
 
 ```ts
-import { createClient } from "vicks";
+import {createClient} from "vicks";
 
 const client = createClient({
     baseURL: "https://jsonplaceholder.typicode.com",
@@ -194,40 +184,3 @@ default request body, and more.
 | `body`    | `object`                            | The default request body to be sent with every request.                                                                                                                                  |
 
 Apart from these options, you can also set any other option that is supported by the `fetch` API.
-
-### Making Requests
-
-Vicks provides a number of methods to make requests. All these methods are fully compatible with the existing `fetch` API.
-
-#### GET Request
-
-```ts
-import { vicks } from "vicks";
-
-// Make a GET request
-async function fetchPosts() {
-    const response = await vicks.get("/posts", {
-        params: { userId: 1 },
-    });
-    const posts = await response.json();
-    console.log(posts);
-}
-```
-
-#### POST Request
-
-```ts
-import { vicks } from "vicks";
-
-// Make a POST request
-async function createPost() {
-    const response = await vicks.post("/posts", {title: "foo", body: "bar"});
-    const post = await response.json();
-    console.log(post);
-}
-```
-
-There are other methods available as well as `put`, `patch` and `delete`. 
-
-
-
