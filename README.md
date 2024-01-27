@@ -1,8 +1,7 @@
 # Vicks - Fetch API with Superpowers
 
 Vicks is a feature-rich, easy-to-use, and extensible implementation built on the top of the `fetch` API for Browsers and
-Servers.
-It is fully compatible with the existing `fetch` API while providing a number of useful extensions and features.
+Servers. It is fully compatible with the existing `fetch` API while providing a number of useful extensions and features.
 It is written in TypeScript and is fully typed. The overall size of the library is just 0.8KB (minified and gzipped).
 
 ## Features
@@ -45,10 +44,10 @@ all the requests made using this client. You can find a list of all the availabl
 as many clients as you want. Each client will have its own interceptor system and default configurations.
 
 ```ts
-import {createClient} from "vicks";
+import { vicks } from "vicks";
 
 // Create a client with default configurations
-const client = createClient({
+const client = vicks.create({
     baseURL: "https://jsonplaceholder.typicode.com",
     headers: {"Content-Type": "application/json"},
 });
@@ -66,7 +65,7 @@ async function fetchPosts() {
 Vicks provides a default client that you can use to make requests.
 
 ```ts
-import {vicks} from "vicks";
+import { vicks } from "vicks";
 
 // Make a GET request
 async function fetchPosts() {
@@ -80,11 +79,11 @@ You can also override the default configurations for the default client. You can
 available options [here](#Default-Configurations-and-Options).
 
 ```ts
-import {vicks} from "vicks";
+import { vicks } from "vicks";
 
 // Override the default configurations
 vicks.defaults.baseURL = "https://jsonplaceholder.typicode.com";
-vicks.defaults.headers = {"Content-Type": "application/json"};
+vicks.defaults.headers = { "Content-Type": "application/json" };
 
 // Make a GET request
 async function fetchPosts() {
@@ -103,9 +102,9 @@ your code. You can add as many interceptors as you want. You can also remove an 
 #### Creating an Interceptor
 
 ```ts
-import {createClient} from "vicks";
+import { vicks } from "vicks";
 
-const client = createClient({
+const client = vicks.create({
     baseURL: "https://jsonplaceholder.typicode.com",
 });
 

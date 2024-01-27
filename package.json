@@ -1,6 +1,6 @@
 {
   "name": "vicks",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "Gaurav Thakur <gthakur581@gmail.com>",
   "description": "A lightweight wrapper for `fetch` API to make HTTP requests in a declarative way.",
   "license": "MIT",
