@@ -18,11 +18,9 @@ export function makeFetchConfig(config?: RequestConfig): RequestInit {
 	const fetchConfig: RequestInit = {};
 	fetchConfig.method = config?.method ?? 'GET';
 	fetchConfig.headers = config?.headers ?? {};
-	if (config?.data) {
-		fetchConfig.body = JSON.stringify(config.data);
-		fetchConfig.headers['Content-Type'] = 'application/json';
-	}
-	fetchConfig.headers = { ...fetchConfig.headers, ...config?.headers };
+	const { body, header } = transformBody(config?.body);
+	fetchConfig.body = body;
+	fetchConfig.headers = { ...fetchConfig.headers, ...header, ...config?.headers };
 	return fetchConfig;
 }
 
@@ -37,5 +35,28 @@ export function createSafeUrl(endpoint?: string, baseUrl?: string) {
 			return baseUrl + endpoint.substring(1);
 		if (endpoint.startsWith('/') || baseUrl.endsWith('/')) return baseUrl + endpoint;
 		return `${baseUrl}/${endpoint}`;
+	}
+}
+
+function transformBody(body?: RequestConfig['body']): {
+	header: RequestInit['headers'];
+	body: RequestInit['body'];
+} {
+	if (!body) return { body: undefined, header: {} };
+	if (typeof body === 'string') {
+		return { body, header: { 'Content-Type': 'text/plain' } };
+	} else if (body instanceof Blob) {
+		return { body, header: { 'Content-Type': 'application/octet-stream' } };
+	} else if (body instanceof FormData) {
+		// Content-Type should be automatically set to 'multipart/form-data' by the browser
+		return { body, header: {} };
+	} else if (body instanceof URLSearchParams) {
+		const header = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' };
+		return { body, header };
+	} else if (typeof body === 'object') {
+		const header = { 'Content-Type': 'application/json' };
+		return { body: JSON.stringify(body), header };
+	} else {
+		return { body, header: {} };
 	}
 }

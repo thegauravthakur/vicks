@@ -1,11 +1,5 @@
 import { createSafeUrl, makeFetchConfig, withSearchParams } from './utils.ts';
-import type {
-	DeleteRequestOptions,
-	GetRequestOptions,
-	NonGetRequestOptions,
-	RequestConfig,
-	TypedResponse,
-} from './types.ts';
+import type { RequestConfig, RequestOptions, TypedResponse } from './types.ts';
 import { HTTP_METHODS } from './constant.ts';
 
 /**
@@ -37,7 +31,10 @@ export function create(options: RequestConfig = {}) {
 		 * @param endpoint - Endpoint to make the request to (can be a full URL)
 		 * @param requestConfig - Request configuration
 		 */
-		get: async <T extends any>(endpoint: string, requestConfig?: GetRequestOptions) => {
+		get: async <T extends any>(
+			endpoint: string,
+			requestConfig?: Omit<RequestOptions, 'body'>,
+		) => {
 			const initialOptions = { ...options, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.GET };
 			const response = await makeRequest(completeOptions);
@@ -51,10 +48,10 @@ export function create(options: RequestConfig = {}) {
 		 */
 		post: async <T extends any>(
 			endpoint: string,
-			body: Record<string, any>,
-			requestConfig?: NonGetRequestOptions,
+			body?: RequestConfig['body'],
+			requestConfig?: RequestOptions,
 		) => {
-			const initialOptions = { ...options, ...requestConfig, data: body };
+			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.POST };
 			const response = await makeRequest(completeOptions);
 			return executeResponseInterceptors(response) as TypedResponse<T>;
@@ -67,10 +64,10 @@ export function create(options: RequestConfig = {}) {
 		 */
 		put: async <T extends any>(
 			endpoint: string,
-			body: Record<string, any>,
-			requestConfig?: NonGetRequestOptions,
+			body?: RequestConfig['body'],
+			requestConfig?: RequestOptions,
 		) => {
-			const initialOptions = { ...options, ...requestConfig, data: body };
+			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.PUT };
 			const response = await makeRequest(completeOptions);
 			return executeResponseInterceptors(response) as TypedResponse<T>;
@@ -83,10 +80,10 @@ export function create(options: RequestConfig = {}) {
 		 */
 		patch: async <T extends any>(
 			endpoint: string,
-			body: Record<string, any>,
-			requestConfig?: NonGetRequestOptions,
+			body?: RequestConfig['body'],
+			requestConfig?: RequestOptions,
 		) => {
-			const initialOptions = { ...options, ...requestConfig, data: body };
+			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.PATCH };
 			const response = await makeRequest(completeOptions);
 			return executeResponseInterceptors(response) as TypedResponse<T>;
@@ -96,7 +93,7 @@ export function create(options: RequestConfig = {}) {
 		 * @param endpoint - Endpoint to make the request to (can be a full URL)
 		 * @param requestConfig - Request configuration
 		 */
-		delete: async <T extends any>(endpoint: string, requestConfig?: DeleteRequestOptions) => {
+		delete: async <T extends any>(endpoint: string, requestConfig?: RequestOptions) => {
 			const initialOptions = { ...options, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.DELETE };
 			const response = await makeRequest(completeOptions);

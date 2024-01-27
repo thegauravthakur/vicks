@@ -1,7 +1,29 @@
 {
   "name": "vicks",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": "Gaurav Thakur <gthakur581@gmail.com>",
+  "description": "A lightweight wrapper for `fetch` API to make HTTP requests in a declarative way.",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/thegauravthakur/vicks"
+  },
+  "keywords": [
+    "fetch",
+    "http",
+    "request",
+    "response",
+    "promise",
+    "async",
+    "await",
+    "declarative",
+    "wrapper",
+    "api",
+    "typescript",
+    "javascript",
+    "deno",
+    "node",
+    "browser"
+  ],
   "main": "dist/vicks.js",
   "module": "dist/vicks.mjs",
   "devDependencies": {
