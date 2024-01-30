@@ -3,7 +3,6 @@
 Vicks is a feature-rich, easy-to-use, and extensible implementation built on the top of the `fetch` API for Browsers and
 Servers. It is fully compatible with the existing `fetch` API while providing a number of useful extensions and features.
 It is written in TypeScript and is fully typed. The overall size of the library is just <strong>0.8KB (minified and gzipped)</strong>
-(almost 15 times smaller than `axios`).
 
 ## Features
 
@@ -50,7 +49,7 @@ import { vicks } from "vicks";
 // Create a client with default configurations
 const client = vicks.create({
     baseURL: "https://jsonplaceholder.typicode.com",
-    headers: { "Authorization": getToken() },
+    headers: { "X-Action-Name": getActionName() },
 });
 
 async function fetchPosts() {
@@ -155,7 +154,7 @@ import { vicks } from "vicks";
 async function updatePost() {
   const response = await vicks.put("/posts/1", {
     body: JSON.stringify(postBody),
-    headers: { "Content-Type": "application/json" },
+    headers: { "X-Action-Name": getActionName() },
     // You can pass any other option that is supported by the `fetch` API
   });
   const post = await response.json();
