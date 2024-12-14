@@ -1,12 +1,12 @@
 import { createSafeUrl, makeFetchConfig, withSearchParams } from './utils.ts';
-import type { RequestConfig, RequestOptions, TypedResponse } from './types.ts';
+import type { ClientOptions, RequestConfig, RequestOptions, TypedResponse } from './types.ts';
 import { HTTP_METHODS } from './constant.ts';
 
 /**
  * Create a new instance of Vicks
  * @param options - Default options for all requests
  */
-export function create(options: RequestConfig = {}) {
+export function create(options: ClientOptions = {}) {
 	const requestInterceptors: Array<(config: RequestConfig) => RequestConfig> = [];
 	const responseInterceptors: Array<(response: Response) => Response> = [];
 
@@ -18,7 +18,7 @@ export function create(options: RequestConfig = {}) {
 		return responseInterceptors.reduce((acc, interceptor) => interceptor(acc), response);
 	};
 
-	function makeRequest(completeOptions: RequestConfig) {
+	function makeRequest(completeOptions: RequestConfig): Promise<Response> {
 		const config = executeRequestInterceptors(completeOptions);
 		const url = createSafeUrl(config?.endpoint, config?.baseUrl);
 		const urlWithParams = withSearchParams(url, config?.params);
