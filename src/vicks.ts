@@ -2,24 +2,35 @@ import { createSafeUrl, makeFetchConfig, withSearchParams } from './utils.ts';
 import type { ClientOptions, RequestConfig, RequestOptions, TypedResponse } from './types.ts';
 import { HTTP_METHODS } from './constant.ts';
 
+type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
+type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
+
 /**
  * Create a new instance of Vicks
  * @param options - Default options for all requests
  */
 export function create(options: ClientOptions = {}) {
-	const requestInterceptors: Array<(config: RequestConfig) => RequestConfig> = [];
-	const responseInterceptors: Array<(response: Response) => Response> = [];
+	const requestInterceptors: Array<RequestInterceptor> = [];
+	const responseInterceptors: Array<ResponseInterceptor> = [];
 
-	const executeRequestInterceptors = (config: RequestConfig) => {
-		return requestInterceptors.reduce((acc, interceptor) => interceptor(acc), config);
+	const executeRequestInterceptors = async (config: RequestConfig) => {
+		for (const interceptor of requestInterceptors) {
+			config = await interceptor(config);
+		}
+		return config;
 	};
 
-	const executeResponseInterceptors = (response: Response) => {
-		return responseInterceptors.reduce((acc, interceptor) => interceptor(acc), response);
+	const executeResponseInterceptors = async (response: Response) => {
+		let result = response;
+		for (const interceptor of responseInterceptors) {
+			const clonedResponse = result.clone();
+			result = await interceptor(clonedResponse);
+		}
+		return result;
 	};
 
-	function makeRequest(completeOptions: RequestConfig): Promise<Response> {
-		const config = executeRequestInterceptors(completeOptions);
+	async function makeRequest(completeOptions: RequestConfig): Promise<Response> {
+		const config = await executeRequestInterceptors(completeOptions);
 		const url = createSafeUrl(config?.endpoint, config?.baseUrl);
 		const urlWithParams = withSearchParams(url, config?.params);
 		return fetch(urlWithParams, makeFetchConfig(config));
@@ -38,7 +49,7 @@ export function create(options: ClientOptions = {}) {
 			const initialOptions = { ...options, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.GET };
 			const response = await makeRequest(completeOptions);
-			return executeResponseInterceptors(response) as TypedResponse<T>;
+			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
 		},
 		/**
 		 * Make a POST request
@@ -54,7 +65,7 @@ export function create(options: ClientOptions = {}) {
 			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.POST };
 			const response = await makeRequest(completeOptions);
-			return executeResponseInterceptors(response) as TypedResponse<T>;
+			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
 		},
 		/**
 		 * Make a PUT request
@@ -70,7 +81,7 @@ export function create(options: ClientOptions = {}) {
 			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.PUT };
 			const response = await makeRequest(completeOptions);
-			return executeResponseInterceptors(response) as TypedResponse<T>;
+			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
 		},
 		/**
 		 * Make a PATCH request
@@ -86,7 +97,7 @@ export function create(options: ClientOptions = {}) {
 			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.PATCH };
 			const response = await makeRequest(completeOptions);
-			return executeResponseInterceptors(response) as TypedResponse<T>;
+			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
 		},
 		/**
 		 * Make a DELETE request
@@ -97,11 +108,13 @@ export function create(options: ClientOptions = {}) {
 			const initialOptions = { ...options, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.DELETE };
 			const response = await makeRequest(completeOptions);
-			return executeResponseInterceptors(response) as TypedResponse<T>;
+			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
 		},
 		interceptors: {
 			request: {
-				use: (callback: (config: RequestConfig) => RequestConfig) => {
+				use: (
+					callback: (config: RequestConfig) => RequestConfig | Promise<RequestConfig>,
+				) => {
 					requestInterceptors.push(callback);
 					return () => {
 						const index = requestInterceptors.indexOf(callback);
@@ -113,7 +126,7 @@ export function create(options: ClientOptions = {}) {
 				},
 			},
 			response: {
-				use: (callback: (response: Response) => Response) => {
+				use: (callback: (response: Response) => Response | Promise<Response>) => {
 					responseInterceptors.push(callback);
 					return () => {
 						let index = responseInterceptors.indexOf(callback);
