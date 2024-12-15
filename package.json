@@ -1,6 +1,6 @@
 {
   "name": "vicks",
-  "version": "0.0.10",
+  "version": "0.0.12",
   "author": "Gaurav Thakur <gthakur581@gmail.com>",
   "description": "A lightweight wrapper for `fetch` API to make HTTP requests in a declarative way.",
   "license": "MIT",
@@ -42,7 +42,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "rimraf ./dist && rollup -c --bundleConfigAsCjs"
+    "build": "rimraf ./dist && rollup -c --bundleConfigAsCjs",
+    "publish": "bun run build && bun publish"
   },
   "type": "module",
   "typings": "dist/vicks.d.ts"
