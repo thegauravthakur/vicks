@@ -18,6 +18,6 @@ export type RequestOptions = Omit<RequestConfig, 'endpoint' | 'baseUrl' | 'metho
 
 export type HttpMethod = (typeof HTTP_METHODS)[keyof typeof HTTP_METHODS];
 
-export interface TypedResponse<T extends any> extends Response {
+export interface FetchResponse<T extends any> extends Response {
 	json(): Promise<T>;
 }

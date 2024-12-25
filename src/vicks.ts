@@ -1,5 +1,5 @@
 import { createSafeUrl, makeFetchConfig, withSearchParams } from './utils.ts';
-import type { ClientOptions, RequestConfig, RequestOptions, TypedResponse } from './types.ts';
+import type { ClientOptions, RequestConfig, RequestOptions, FetchResponse } from './types.ts';
 import { HTTP_METHODS } from './constant.ts';
 
 type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
@@ -20,13 +20,13 @@ export function create(options: ClientOptions = {}) {
 		return config;
 	};
 
-	const executeResponseInterceptors = async (response: Response) => {
+	const executeResponseInterceptors = async <T>(response: Response) => {
 		let result = response;
 		for (const interceptor of responseInterceptors) {
 			const clonedResponse = result.clone();
 			result = await interceptor(clonedResponse);
 		}
-		return result;
+		return result as FetchResponse<T>;
 	};
 
 	async function makeRequest(completeOptions: RequestConfig): Promise<Response> {
@@ -45,11 +45,11 @@ export function create(options: ClientOptions = {}) {
 		get: async <T extends any>(
 			endpoint: string,
 			requestConfig?: Omit<RequestOptions, 'body'>,
-		) => {
+		): Promise<FetchResponse<T>> => {
 			const initialOptions = { ...options, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.GET };
 			const response = await makeRequest(completeOptions);
-			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
+			return executeResponseInterceptors<T>(response);
 		},
 		/**
 		 * Make a POST request
@@ -61,11 +61,11 @@ export function create(options: ClientOptions = {}) {
 			endpoint: string,
 			body?: RequestConfig['body'],
 			requestConfig?: RequestOptions,
-		) => {
+		): Promise<FetchResponse<T>> => {
 			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.POST };
 			const response = await makeRequest(completeOptions);
-			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
+			return executeResponseInterceptors<T>(response);
 		},
 		/**
 		 * Make a PUT request
@@ -77,11 +77,11 @@ export function create(options: ClientOptions = {}) {
 			endpoint: string,
 			body?: RequestConfig['body'],
 			requestConfig?: RequestOptions,
-		) => {
+		): Promise<FetchResponse<T>> => {
 			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.PUT };
 			const response = await makeRequest(completeOptions);
-			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
+			return executeResponseInterceptors<T>(response);
 		},
 		/**
 		 * Make a PATCH request
@@ -93,11 +93,11 @@ export function create(options: ClientOptions = {}) {
 			endpoint: string,
 			body?: RequestConfig['body'],
 			requestConfig?: RequestOptions,
-		) => {
+		): Promise<FetchResponse<T>> => {
 			const initialOptions = { ...options, body, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.PATCH };
 			const response = await makeRequest(completeOptions);
-			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
+			return executeResponseInterceptors<T>(response);
 		},
 		/**
 		 * Make a DELETE request
@@ -108,35 +108,38 @@ export function create(options: ClientOptions = {}) {
 			const initialOptions = { ...options, ...requestConfig };
 			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.DELETE };
 			const response = await makeRequest(completeOptions);
-			return (await executeResponseInterceptors(response)) as TypedResponse<T>;
+			return executeResponseInterceptors<T>(response);
 		},
 		interceptors: {
 			request: {
-				use: (
-					callback: (config: RequestConfig) => RequestConfig | Promise<RequestConfig>,
-				) => {
-					requestInterceptors.push(callback);
+				use: (interceptor: RequestInterceptor) => {
+					requestInterceptors.push(interceptor);
+					// Return a function to remove the interceptor
 					return () => {
-						const index = requestInterceptors.indexOf(callback);
+						const index = requestInterceptors.indexOf(interceptor);
 						if (index !== -1) requestInterceptors.splice(index, 1);
 					};
 				},
+				// Clear all request interceptors
 				clear: () => {
 					requestInterceptors.splice(0, requestInterceptors.length);
 				},
 			},
 			response: {
-				use: (callback: (response: Response) => Response | Promise<Response>) => {
-					responseInterceptors.push(callback);
+				use: (interceptor: ResponseInterceptor) => {
+					responseInterceptors.push(interceptor);
+					// Return a function to remove the interceptor
 					return () => {
-						let index = responseInterceptors.indexOf(callback);
+						let index = responseInterceptors.indexOf(interceptor);
 						if (index !== -1) responseInterceptors.splice(index, 1);
 					};
 				},
+				// Clear all response interceptors
 				clear: () => {
 					responseInterceptors.splice(0, responseInterceptors.length);
 				},
 			},
+			// Clear all interceptors
 			clear: () => {
 				requestInterceptors.splice(0, requestInterceptors.length);
 				responseInterceptors.splice(0, responseInterceptors.length);
