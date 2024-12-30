@@ -13,11 +13,33 @@ export function create(options: ClientOptions = {}) {
 	const requestInterceptors: Array<RequestInterceptor> = [];
 	const responseInterceptors: Array<ResponseInterceptor> = [];
 
-	const executeRequestInterceptors = async (config: RequestConfig) => {
-		for (const interceptor of requestInterceptors) {
-			config = await interceptor(config);
+	const executeRequestInterceptors = async (config: RequestConfig): Promise<RequestConfig> => {
+		try {
+			const baseConfig = deepMerge({}, config);
+			return await requestInterceptors.reduce(async (prevConfigPromise, interceptor) => {
+				try {
+					const prevConfig = await prevConfigPromise;
+					const interceptorResult = await interceptor(prevConfig);
+
+					if (!interceptorResult || typeof interceptorResult !== 'object') {
+						console.error('Interceptor must return a valid config object');
+						console.error('Ignoring interceptor result');
+						return prevConfig;
+					}
+
+					// Deep merge the interceptor results with the previous config
+					return deepMerge(prevConfig, interceptorResult);
+				} catch (error) {
+					console.error('Request interceptor failed:', error);
+					console.error('Ignoring interceptor result');
+					return prevConfigPromise;
+				}
+			}, Promise.resolve(baseConfig));
+		} catch (error) {
+			console.error('Failed to execute request interceptors:', error);
+			console.error('Ignoring request interceptors');
+			return config;
 		}
-		return config;
 	};
 
 	const executeResponseInterceptors = async <T>(response: Response) => {
