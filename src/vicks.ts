@@ -1,6 +1,6 @@
-import { createSafeUrl, makeFetchConfig, withSearchParams } from './utils.ts';
+import { createSafeUrl, deepMerge, makeFetchConfig, withSearchParams } from './utils.ts';
 import type { ClientOptions, RequestConfig, RequestOptions, FetchResponse } from './types.ts';
-import { HTTP_METHODS } from './constant.ts';
+import { type AllowedMethods, HTTP_METHODS } from './constant.ts';
 
 type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;
 type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
@@ -36,6 +36,15 @@ export function create(options: ClientOptions = {}) {
 		return fetch(urlWithParams, makeFetchConfig(config));
 	}
 
+	function makeCombinedOptions(
+		endpoint: string,
+		method: AllowedMethods,
+		config: RequestOptions,
+	): RequestConfig {
+		const initialOptions = deepMerge(options, config);
+		return { ...initialOptions, endpoint, method };
+	}
+
 	return {
 		/**
 		 * Make a GET request
@@ -46,9 +55,8 @@ export function create(options: ClientOptions = {}) {
 			endpoint: string,
 			requestConfig?: Omit<RequestOptions, 'body'>,
 		): Promise<FetchResponse<T>> => {
-			const initialOptions = { ...options, ...requestConfig };
-			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.GET };
-			const response = await makeRequest(completeOptions);
+			const options = makeCombinedOptions(endpoint, HTTP_METHODS.GET, requestConfig ?? {});
+			const response = await makeRequest(options);
 			return executeResponseInterceptors<T>(response);
 		},
 		/**
@@ -62,9 +70,9 @@ export function create(options: ClientOptions = {}) {
 			body?: RequestConfig['body'],
 			requestConfig?: RequestOptions,
 		): Promise<FetchResponse<T>> => {
-			const initialOptions = { ...options, body, ...requestConfig };
-			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.POST };
-			const response = await makeRequest(completeOptions);
+			const configWithBody = { body, ...requestConfig };
+			const options = makeCombinedOptions(endpoint, HTTP_METHODS.POST, configWithBody);
+			const response = await makeRequest(options);
 			return executeResponseInterceptors<T>(response);
 		},
 		/**
@@ -78,9 +86,9 @@ export function create(options: ClientOptions = {}) {
 			body?: RequestConfig['body'],
 			requestConfig?: RequestOptions,
 		): Promise<FetchResponse<T>> => {
-			const initialOptions = { ...options, body, ...requestConfig };
-			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.PUT };
-			const response = await makeRequest(completeOptions);
+			const configWithBody = { body, ...requestConfig };
+			const options = makeCombinedOptions(endpoint, HTTP_METHODS.PUT, configWithBody);
+			const response = await makeRequest(options);
 			return executeResponseInterceptors<T>(response);
 		},
 		/**
@@ -94,9 +102,9 @@ export function create(options: ClientOptions = {}) {
 			body?: RequestConfig['body'],
 			requestConfig?: RequestOptions,
 		): Promise<FetchResponse<T>> => {
-			const initialOptions = { ...options, body, ...requestConfig };
-			const completeOptions = { ...initialOptions, endpoint, method: HTTP_METHODS.PATCH };
-			const response = await makeRequest(completeOptions);
+			const configWithBody = { body, ...requestConfig };
+			const options = makeCombinedOptions(endpoint, HTTP_METHODS.PATCH, configWithBody);
+			const response = await makeRequest(options);
 			return executeResponseInterceptors<T>(response);
 		},
 		/**

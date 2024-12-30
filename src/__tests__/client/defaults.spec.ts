@@ -2,9 +2,10 @@ import { it, jest, expect, describe, beforeAll } from 'bun:test';
 import { create } from '../../vicks.ts';
 import { faker } from '@faker-js/faker';
 import { createSafeUrl } from '../../utils.ts';
+import type { ClientOptions } from '../../types.ts';
 
 function generateRandomConfig() {
-	const defaultOptions = {
+	const defaultOptions: ClientOptions = {
 		baseUrl: faker.internet.url(),
 		headers: { 'Content-Type': 'application/json' },
 	};
@@ -37,9 +38,10 @@ describe('Client defaults', () => {
 
 		await client.get(endpoint, { headers: requestHeaders });
 
+		const combinedHeaders = { ...defaultOptions.headers, ...requestHeaders };
 		expect(global.fetch).toHaveBeenCalledWith(
 			createSafeUrl(endpoint, defaultOptions.baseUrl),
-			expect.objectContaining({ headers: requestHeaders }),
+			expect.objectContaining({ headers: combinedHeaders }),
 		);
 	});
 

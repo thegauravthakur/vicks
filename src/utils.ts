@@ -101,3 +101,51 @@ function transformBody(body?: RequestConfig['body']): {
 		return { body, header: {} };
 	}
 }
+
+/**
+ * Deep merges two objects with the second object's values taking precedence
+ * @param target - The target object to merge into
+ * @param source - The source object to merge from
+ * @returns A new merged object
+ */
+export function deepMerge<T extends object, U extends object>(target: T, source: U): T & U {
+	// Handle null or undefined inputs
+	if (!target || !source) {
+		return (source ?? target) as T & U;
+	}
+
+	// Create a new object to avoid mutating the original
+	const result: Record<string, any> = { ...target };
+
+	// Iterate through source object properties
+	Object.keys(source).forEach(key => {
+		const targetValue = (target as Record<string, any>)[key];
+		const sourceValue = (source as Record<string, any>)[key];
+
+		// Handle arrays specially
+		if (Array.isArray(sourceValue)) {
+			result[key] = Array.isArray(targetValue)
+				? [...sourceValue] // Create a new array
+				: sourceValue;
+			return;
+		}
+
+		// Handle nested objects
+		if (
+			sourceValue &&
+			typeof sourceValue === 'object' &&
+			targetValue &&
+			typeof targetValue === 'object' &&
+			!Array.isArray(sourceValue) &&
+			!Array.isArray(targetValue)
+		) {
+			result[key] = deepMerge(targetValue, sourceValue);
+			return;
+		}
+
+		// Handle primitive values and other cases
+		result[key] = sourceValue !== undefined ? sourceValue : targetValue;
+	});
+
+	return result as T & U;
+}
