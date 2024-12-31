@@ -1,5 +1,5 @@
 import { createSafeUrl, deepMerge, makeFetchConfig, withSearchParams } from './utils.ts';
-import type { ClientOptions, RequestConfig, RequestOptions, FetchResponse } from './types.ts';
+import type { ClientOptions, FetchResponse, RequestConfig, RequestOptions } from './types.ts';
 import { type AllowedMethods, HTTP_METHODS } from './constant.ts';
 
 type RequestInterceptor = (config: RequestConfig) => RequestConfig | Promise<RequestConfig>;

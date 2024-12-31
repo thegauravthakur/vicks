@@ -122,7 +122,7 @@ export function deepMerge<T extends object, U extends object>(target: T, source:
 		const targetValue = (target as Record<string, any>)[key];
 		const sourceValue = (source as Record<string, any>)[key];
 
-		// Handle arrays specially
+		// Handle arrays especially
 		if (Array.isArray(sourceValue)) {
 			result[key] = Array.isArray(targetValue)
 				? [...sourceValue] // Create a new array
