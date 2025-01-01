@@ -1,5 +1,4 @@
 import { createSafeUrl } from '../../utils';
-import { describe, it, expect } from 'bun:test';
 
 describe('createSafeUrl', () => {
 	describe('when endpoint is a valid URL', () => {

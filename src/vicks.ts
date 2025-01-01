@@ -7,9 +7,10 @@ type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
 
 /**
  * Create a new instance of Vicks
- * @param options - Default options for all requests
+ * @param _options - Default options for all requests
  */
-export function create(options: ClientOptions = {}) {
+export function create(_options: ClientOptions = {}) {
+	const options = structuredClone(_options);
 	const requestInterceptors: Array<RequestInterceptor> = [];
 	const responseInterceptors: Array<ResponseInterceptor> = [];
 

@@ -1,4 +1,3 @@
-import { it, jest, expect, describe, beforeAll } from 'bun:test';
 import { create } from '../../vicks.ts';
 import { faker } from '@faker-js/faker';
 import { createSafeUrl } from '../../utils.ts';
@@ -14,7 +13,7 @@ function generateRandomConfig() {
 	return { defaultOptions, endpoint };
 }
 
-describe('Client defaults', () => {
+describe('Client Default Configuration', () => {
 	beforeAll(() => {
 		const response = new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
 		global.fetch = jest.fn(async () => Promise.resolve(response));
@@ -29,124 +28,148 @@ describe('Client defaults', () => {
 			createSafeUrl(endpoint, defaultOptions.baseUrl),
 			expect.objectContaining({ headers: defaultOptions.headers }),
 		);
+
+		await client.post(endpoint);
+
+		expect(global.fetch).toHaveBeenCalledWith(
+			createSafeUrl(endpoint, defaultOptions.baseUrl),
+			expect.objectContaining({ headers: defaultOptions.headers }),
+		);
 	});
 
 	it('should overwrite default options with request-specific options', async () => {
 		const { defaultOptions, endpoint } = generateRandomConfig();
 		const client = create(defaultOptions);
-		const requestHeaders = { Authorization: 'Bearer TOKEN' };
+		{
+			const requestHeaders = { Authorization: 'Bearer TOKEN' };
+			await client.get(endpoint, { headers: requestHeaders });
+			const combinedHeaders = { ...defaultOptions.headers, ...requestHeaders };
 
+			expect(global.fetch).toHaveBeenCalledWith(
+				createSafeUrl(endpoint, defaultOptions.baseUrl),
+				expect.objectContaining({ headers: combinedHeaders }),
+			);
+		}
+
+		{
+			const requestHeaders = { 'X-Custom-Header': 'Custom Value' };
+			await client.post(endpoint, undefined, { headers: requestHeaders });
+			const combinedHeaders = { ...defaultOptions.headers, ...requestHeaders };
+
+			expect(global.fetch).toHaveBeenCalledWith(
+				createSafeUrl(endpoint, defaultOptions.baseUrl),
+				expect.objectContaining({ headers: combinedHeaders }),
+			);
+		}
+	});
+
+	it('should reflect runtime modifications to defaults in subsequent requests', async () => {
+		const { defaultOptions, endpoint } = generateRandomConfig();
+		const client = create(defaultOptions);
+
+		{
+			const token = faker.word.sample();
+			if (client.defaults.headers) client.defaults.headers.Authorization = token;
+			await client.get(endpoint);
+
+			expect(global.fetch).toHaveBeenCalledWith(
+				createSafeUrl(endpoint, defaultOptions.baseUrl),
+				expect.objectContaining({
+					headers: { 'Content-Type': 'application/json', Authorization: token },
+				}),
+			);
+		}
+		{
+			const token = faker.word.sample();
+			if (client.defaults.headers) client.defaults.headers.Authorization = token;
+			const newEndpoint = faker.word.sample();
+			await client.get(newEndpoint);
+
+			expect(global.fetch).toHaveBeenCalledWith(
+				createSafeUrl(newEndpoint, defaultOptions.baseUrl),
+				expect.objectContaining({
+					headers: { 'Content-Type': 'application/json', Authorization: token },
+				}),
+			);
+		}
+	});
+
+	it('should not share defaults between client instances', async () => {
+		{
+			const { defaultOptions, endpoint } = generateRandomConfig();
+			const client1 = create(defaultOptions);
+			await client1.get(endpoint);
+
+			expect(global.fetch).toHaveBeenCalledWith(
+				createSafeUrl(endpoint, defaultOptions.baseUrl),
+				expect.objectContaining({ headers: defaultOptions.headers }),
+			);
+		}
+		{
+			const { defaultOptions, endpoint } = generateRandomConfig();
+			const client2 = create(defaultOptions);
+			await client2.get(endpoint);
+
+			expect(global.fetch).toHaveBeenCalledWith(
+				createSafeUrl(endpoint, defaultOptions.baseUrl),
+				expect.objectContaining({ headers: defaultOptions.headers }),
+			);
+		}
+	});
+
+	it('should deeply merge default nested options with request-specific options', async () => {
+		const baseUrl = faker.internet.url();
+		const initialHeaders = {
+			[faker.word.sample()]: faker.word.sample(),
+			[faker.word.sample()]: faker.word.sample(),
+		};
+		const client = create({ baseUrl, headers: initialHeaders });
+		const requestHeaders = {
+			[faker.word.sample()]: faker.word.sample(),
+			[faker.word.sample()]: faker.word.sample(),
+		};
+		const endpoint = faker.word.sample();
 		await client.get(endpoint, { headers: requestHeaders });
 
-		const combinedHeaders = { ...defaultOptions.headers, ...requestHeaders };
+		const combinedHeaders = { ...initialHeaders, ...requestHeaders };
+
 		expect(global.fetch).toHaveBeenCalledWith(
-			createSafeUrl(endpoint, defaultOptions.baseUrl),
+			createSafeUrl(endpoint, baseUrl),
 			expect.objectContaining({ headers: combinedHeaders }),
 		);
 	});
 
-	it('should reflect runtime modifications to defaults in subsequent requests', async () => {
-		const client = create({
-			baseUrl: 'https://api.example.com',
-			headers: { 'Content-Type': 'application/json' },
-		});
-
-		if (client.defaults.headers) client.defaults.headers.Authorization = 'Bearer TOKEN';
-		await client.get('/new-endpoint');
-
-		expect(global.fetch).toHaveBeenCalledWith(
-			'https://api.example.com/new-endpoint',
-			expect.objectContaining({
-				headers: { 'Content-Type': 'application/json', Authorization: 'Bearer TOKEN' },
-			}),
-		);
-	});
-
-	it('should not share defaults between client instances', async () => {
-		const client1 = create({
-			baseUrl: 'https://api.instance1.com',
-			headers: { Authorization: 'Bearer TOKEN1' },
-		});
-
-		const client2 = create({
-			baseUrl: 'https://api.instance2.com',
-			headers: { Authorization: 'Bearer TOKEN2' },
-		});
-
-		await client1.get('/endpoint');
-		expect(global.fetch).toHaveBeenCalledWith(
-			'https://api.instance1.com/endpoint',
-			expect.objectContaining({ headers: { Authorization: 'Bearer TOKEN1' } }),
-		);
-
-		await client2.get('/endpoint');
-		expect(global.fetch).toHaveBeenCalledWith(
-			'https://api.instance2.com/endpoint',
-			expect.objectContaining({ headers: { Authorization: 'Bearer TOKEN2' } }),
-		);
-	});
-
-	it.todo(
-		'should deeply merge default nested options with request-specific options',
-		async () => {
-			const client = create({
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: 'Bearer TOKEN1',
-				},
-			});
-
-			global.fetch = jest.fn(async () =>
-				Promise.resolve(
-					new Response(JSON.stringify({ message: 'Success' }), { status: 200 }),
-				),
-			);
-
-			await client.get('/endpoint', {
-				headers: {
-					Authorization: 'Bearer TOKEN2', // Overrides the default value
-					'Accept-Language': 'en-US', // Adds a new header
-				},
-			});
-
-			expect(global.fetch).toHaveBeenCalledWith(
-				expect.any(String),
-				expect.objectContaining({
-					headers: {
-						'Content-Type': 'application/json', // Keeps default
-						Authorization: 'Bearer TOKEN2', // Overwritten
-						'Accept-Language': 'en-US', // Added
-					},
-				}),
-			);
-		},
-	);
 	it('should clear defaults when explicitly modified', async () => {
-		const client = create({
-			baseUrl: 'https://api.example.com',
-			headers: { 'Content-Type': 'application/json', Authorization: 'Bearer TOKEN1' },
-		});
+		const { defaultOptions } = generateRandomConfig();
+		const client = create(defaultOptions);
 
 		client.defaults.headers = {};
-
 		await client.get('/endpoint');
+
 		expect(global.fetch).toHaveBeenCalledWith(
-			'https://api.example.com/endpoint',
+			createSafeUrl('/endpoint', defaultOptions.baseUrl),
 			expect.objectContaining({ headers: {} }),
 		);
 	});
 
-	it.todo('should not mutate shared defaults across clients', async () => {
-		const sharedDefaults = {
-			baseUrl: 'https://api.example.com',
-			headers: { Authorization: 'Bearer TOKEN1' },
-		};
+	it('should not mutate shared defaults across clients', async () => {
+		const { defaultOptions } = generateRandomConfig();
+		const client1 = create(defaultOptions);
+		const client2 = create(defaultOptions);
 
-		const client1 = create(sharedDefaults);
-		const client2 = create(sharedDefaults);
+		client1.defaults.headers = {};
+		await client1.get('/endpoint');
 
-		if (client1.defaults.headers) client1.defaults.headers.Authorization = 'Bearer TOKEN2';
-		if (client2.defaults.headers)
-			expect(client2.defaults.headers.Authorization).toBe('Bearer TOKEN1');
+		expect(global.fetch).toHaveBeenCalledWith(
+			createSafeUrl('/endpoint', defaultOptions.baseUrl),
+			expect.objectContaining({ headers: {} }),
+		);
+
+		await client2.get('/endpoint');
+
+		expect(global.fetch).toHaveBeenCalledWith(
+			createSafeUrl('/endpoint', defaultOptions.baseUrl),
+			expect.not.objectContaining({ headers: {} }),
+		);
 	});
 });
